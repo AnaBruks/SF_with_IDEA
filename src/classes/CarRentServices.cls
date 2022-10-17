@@ -22,16 +22,10 @@ public with sharing class CarRentServices {
 
 
     public static Database.SaveResult createSalesManager(String name, Date birthdate, String email) {
-        try {
-            Sales_Manager__c sm = new Sales_Manager__c(Name = name, Birth_Date__c = birthdate, Email__c = email);
-            return Database.insert(sm, true);
-        } catch (DmlException e) {
-            System.debug(e.getMessage());
-        }
-        return null;
+        Sales_Manager__c sm = new Sales_Manager__c(Name = name, Birth_Date__c = birthdate, Email__c = email);
+        return Database.insert(sm, true);
     }
-
-    public static void createNewDeal(DateTime startDate, DateTime endDate, Id salesRepId, Id carId) {
+    public static void createNewDeal(Datetime startDate, Datetime endDate, Id salesRepId, Id carId) {
         Deal__c deal = new Deal__c(Start_Date__c = startDate,
                 End_Date__c = endDate,
                 Sales_Manager__c = salesRepId,
@@ -39,37 +33,29 @@ public with sharing class CarRentServices {
                 Status__c = 'Open');
         insert deal;
     }
-
-    public static Database.SaveResult updateDeal(Id dealId, Map<String, Object> fieldNameToValue) {
-        //	update deal with values in a map
-        Deal__c dealToUpdate = [SELECT Id FROM Deal__c WHERE Id = :dealId LIMIT 1];
-        try {
-            for (String key : fieldNameToValue.keySet()) {
-                Object o = dealToUpdate.get(key);
-                o = fieldNameToValue.get(key);
-            }
-            return Database.update(dealToUpdate, true);
-        } catch (DmlException e) {
-            System.debug(e.getMessage());
-        }
-        return null;
-    }
-
     public static void deactivateCar(Id carId) {
-//Car got broken. Update all open deals for this car with Status Lost. Car's IsAvailableForRent set false.
-        List<Deal__c> dealsList = [                                       // all open deals for this car
+        List<Deal__c> dealsList = [
                 SELECT Id
                 FROM Deal__c
                 WHERE Car__r.Id = :carId AND Status__c = 'Open'
         ];
         for (Deal__c d : dealsList) {
-            d.Status__c = 'Lost';                                         //set status LOST
+            d.Status__c = 'Lost';
         }
         update dealsList;
 
         Car__c lostCar = [SELECT Id FROM Car__c WHERE Id = :carId LIMIT 1];
-        lostCar.Is_Valid_For_Rent__c = false;                             //Car's IsAvailableForRent set false
+        lostCar.Is_Valid_For_Rent__c = false;
         update lostCar;
+    }
+
+    public static Database.SaveResult updateDeal(Id dealId, Map<String, Object> fieldNameToValue) {
+        Deal__c dealToUpdate = [SELECT Id FROM Deal__c WHERE Id = :dealId LIMIT 1];
+
+        for (String key : fieldNameToValue.keySet()) {
+            dealToUpdate.put(key, fieldNameToValue.get(key));
+        }
+        return Database.update(dealToUpdate, true);
     }
 
 
@@ -118,21 +104,11 @@ public with sharing class CarRentServices {
                 GROUP BY Car__c
         ];
 //        List<AggregateResult> timesOfRent = [
-//                SELECT Deals__r deal, COUNT(Deals__r) amount, Id
+//                SELECT COUNT(Car__c.Deals__r) amount, Id car
 //                FROM Car__c
-//                WHERE Deals__r.Status__c = 'Won'
+//                WHERE Car__c.Deals__r.Status__c = 'Won'
 //                GROUP BY Id
 //        ];
-//
-//        List<AggregateResult> timesOfRent1 = [
-//                SELECT COUNT(Id) amount, (SELECT Id, Name FROM Car__c)
-//                FROM Deal__c
-//                WHERE Status__c = 'Won'
-//                GROUP BY Car__c
-//        ];
-
-// [SELECT Id, Name FROM Car_c]
-
 
 // when car is without Deal -> error
 
@@ -152,7 +128,6 @@ public with sharing class CarRentServices {
         }
         return result;
     }
-
     public static Sales_Manager__c getTopRatedSalesRepOfYear(Integer year) {
         List<AggregateResult> wonDealsNumber = [
                 SELECT COUNT(Id) n, Sales_Manager__c sales
