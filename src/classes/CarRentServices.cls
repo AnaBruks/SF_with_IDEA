@@ -48,7 +48,6 @@ public with sharing class CarRentServices {
         lostCar.Is_Valid_For_Rent__c = false;
         update lostCar;
     }
-
     public static Database.SaveResult updateDeal(Id dealId, Map<String, Object> fieldNameToValue) {
         Deal__c dealToUpdate = [SELECT Id FROM Deal__c WHERE Id = :dealId LIMIT 1];
 
@@ -95,7 +94,6 @@ public with sharing class CarRentServices {
         ];
     }
     public static Map<Id, Integer> getCarRentStatistic() {
-//Return map, where key - car id, and value - number of times car was rent.
         Map<Id, Integer> result = new Map<Id, Integer>();
         List<AggregateResult> timesOfRent = [      // get number of rents from deals for cars that have deals
                 SELECT COUNT(Id) amount, Car__c car
