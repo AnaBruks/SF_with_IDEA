@@ -15,7 +15,7 @@ public with sharing class DealTriggerHandler {
                 if (paramDeal.Car__c == deal.Car__c
                         && paramDeal.Start_Date__c == deal.Start_Date__c
                         && paramDeal.End_Date__c == deal.End_Date__c && paramDeal.Status__c!='Lost')
-                    paramDeal.addError('You\'re trying to create a duplicate, check the deal№ '+ deal.Name);
+                    paramDeal.addError('You\'re trying to create a duplicate');
             }
         }
     }
@@ -39,5 +39,3 @@ public with sharing class DealTriggerHandler {
 //                    paramDeal.addError('You\'re trying to create a duplicate');
 //            }
 //        }
-
-

@@ -1,0 +1,21 @@
+<!--
+ - Created by anast on 24.10.2022.
+ -->
+
+<!-- Sales Manager Page -->
+<template>
+    <lightning-button label="Sync Manager" title="Sync Manager" onclick={handleClick} class="slds-m-left_x-large"></lightning-button>
+    <div if:true={showText}>{textValue}</div>
+    <br/><br/>
+    <lightning-card>
+        <div class="slds-m-around_medium">
+            Open deal(s):<br/><br/>
+            <lightning-datatable
+                    key-field="Id"
+                    data={records}
+                    columns={columns}
+                    show-row-number-column="true">
+            </lightning-datatable>
+        </div>
+    </lightning-card>
+</template>

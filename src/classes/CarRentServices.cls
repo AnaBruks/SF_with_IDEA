@@ -60,9 +60,9 @@ public with sharing class CarRentServices {
 
     public static List<Deal__c> getWonDeals(DateTime startDate, DateTime endDate) {
         return [
-                SELECT Id, Name
+                SELECT Id
                 FROM Deal__c
-                WHERE Status__c = 'Won' AND Start_Date__c >= :startDate AND Start_Date__c <= :endDate
+                WHERE Status__c = 'Won' AND Start_Date__c >= :startDate AND End_Date__c <= :endDate
         ];
     }
     public static Map<Id, Integer> getWonDealsBySalesManagerIds(Set <Id> salesManagerIds) {
@@ -83,13 +83,12 @@ public with sharing class CarRentServices {
     }
     public static List<Car__c> getCarsAvailableForRent(Date rentStart, Date rentEnd) {
         return (List<Car__c>) [
-                SELECT Id, Name
-                FROM Car__c
-                WHERE Id IN (
+                SELECT Id, Is_Valid_For_Rent__c, Model__c
+                FROM Car__c WHERE Is_Valid_For_Rent__c = TRUE
+                AND Id IN (
                         SELECT Car__c
                         FROM Deal__c
-                        WHERE Car__r.Is_Valid_For_Rent__c = TRUE //status
-                        AND End_Date__c < :rentEnd AND Start_Date__c > :rentStart
+                        WHERE Start_Date__c >=:rentStart AND End_Date__c <=:rentEnd AND Status__c != 'Open'
                 )
         ];
     }
@@ -98,29 +97,15 @@ public with sharing class CarRentServices {
         List<AggregateResult> timesOfRent = [      // get number of rents from deals for cars that have deals
                 SELECT COUNT(Id) amount, Car__c car
                 FROM Deal__c
-                WHERE Status__c = 'Won'
                 GROUP BY Car__c
         ];
-//        List<AggregateResult> timesOfRent = [
-//                SELECT COUNT(Car__c.Deals__r) amount, Id car
+//        List<AggregateResult> timesOfRent0 = [
+//                SELECT COUNT(Deals__r) amount, Id car
 //                FROM Car__c
-//                WHERE Car__c.Deals__r.Status__c = 'Won'
+//               WHERE Deals__r IN (SELECT Id FROM Deal__c WHERE Car__r.Id = car)
 //                GROUP BY Id
 //        ];
 
-// when car is without Deal -> error
-
-//        List<Car__c> cars = [
-//                SELECT Id, Name
-//                FROM Car__c
-//                WHERE Id IN (
-//                        SELECT Car__c
-//                        FROM Deal__c
-//                )
-//        ];
-//        for (Integer i = 0; i < cars.size(); i++) {
-//            result.put(cars[i].Id, (Integer) (timesOfRent[i].get('amount')));
-//        }
         for (AggregateResult number_rents : timesOfRent) {
             result.put((Id) number_rents.get('car'), (Integer) (number_rents.get('amount')));
         }
@@ -128,13 +113,13 @@ public with sharing class CarRentServices {
     }
     public static Sales_Manager__c getTopRatedSalesRepOfYear(Integer year) {
         List<AggregateResult> wonDealsNumber = [
-                SELECT COUNT(Id) n, Sales_Manager__c sales
+                SELECT COUNT(Id) n, Sales_Manager__r.Id sid
                 FROM Deal__c
                 WHERE Status__c = 'Won' AND CALENDAR_YEAR(End_Date__c) = :year
-                GROUP BY Sales_Manager__c
+                GROUP BY Sales_Manager__r.Id
                 ORDER BY COUNT(Id) DESC
         ];
-        return (Sales_Manager__c) wonDealsNumber[0]. get ('sales');
+        return  new Sales_Manager__c(Id = (Id) wonDealsNumber[0].get('sid') );
     }
 
 
